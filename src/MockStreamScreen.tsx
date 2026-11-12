@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Button, Page } from '@wearables-ui-toolkit/mrbd';
+import { Page } from '@wearables-ui-toolkit/mrbd';
+import { FullWidthButton } from './FullWidthButton';
 
 type TestState = 'idle' | 'connecting' | 'streaming' | 'error';
 
@@ -274,17 +275,17 @@ export function MockStreamScreen({ onBack }: { onBack: () => void }) {
         <p>Камера и разрешения не запрашиваются. Видеоданные не сохраняются и не отправляются.</p>
 
         <div className="action-list">
-          <Button
+          <FullWidthButton
             title="Запустить локальный тест DEMO/MOCK"
             onActivate={() => void start()}
             disabled={state === 'connecting' || state === 'streaming'}
           />
-          <Button
+          <FullWidthButton
             title="Остановить локальный тест"
             onActivate={stop}
             disabled={state === 'idle'}
           />
-          <Button title="Назад на главный экран" onActivate={onBack} />
+          <FullWidthButton title="Назад на главный экран" onActivate={onBack} />
         </div>
       </main>
     </Page>

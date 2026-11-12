@@ -30,6 +30,7 @@ body {
   overflow-x: hidden;
   overflow-y: auto;
   padding: clamp(0.75rem, 4vmin, 1.5rem);
+  padding-block-start: clamp(4.75rem, 14vmin, 5.5rem);
   padding-block-end: clamp(1rem, 6vmin, 2rem);
 }
 
@@ -154,4 +155,9 @@ body {
     max-width: 48rem;
     margin-inline: auto;
   }
+}
+
+.full-width-button {
+  width: 100%;
+  min-width: 0;
 }

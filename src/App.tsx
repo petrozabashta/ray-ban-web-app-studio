@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import {
   App as ToolkitApp,
-  Button,
   InputTextView,
   Page,
   State,
 } from '@wearables-ui-toolkit/mrbd';
 import packageJson from '../package.json';
+import { FullWidthButton } from './FullWidthButton';
 import { MockStreamScreen } from './MockStreamScreen';
 import {
   createChecklistItem,
@@ -133,17 +133,17 @@ export function App() {
           <p>Лёгкая стартовая площадка для веб-приложений очков.</p>
         </header>
         <div className="action-list">
-          <Button
+          <FullWidthButton
             title="Открыть рабочий чек-лист"
             onActivate={() => setScreen('checklist')}
           />
-          <Button title="Проверить управление" onActivate={() => setScreen('controls')} />
-          <Button
-            title="Локальная проверка видео DEMO/MOCK"
+          <FullWidthButton title="Проверить управление" onActivate={() => setScreen('controls')} />
+          <FullWidthButton
+            title="Тест видео DEMO/MOCK"
             onActivate={() => setScreen('mock-stream')}
           />
-          <Button title="Информация о приложении" onActivate={() => setScreen('info')} />
-          <Button
+          <FullWidthButton title="О приложении" onActivate={() => setScreen('info')} />
+          <FullWidthButton
             title="Открыть пример Snake"
             onActivate={() => {
               window.location.href = `${import.meta.env.BASE_URL}examples/snake/index.html`;
@@ -170,7 +170,7 @@ export function App() {
             }}
             showActionButton={false}
           />
-          <Button title="Добавить пункт" onActivate={() => addItem(draft)} />
+          <FullWidthButton title="Добавить пункт" onActivate={() => addItem(draft)} />
         </div>
 
         <p className="list-count" aria-live="polite">
@@ -181,7 +181,7 @@ export function App() {
             <p>Список пуст. Добавьте первый пункт выше.</p>
           ) : (
             items.map((item) => (
-              <Button
+              <FullWidthButton
                 key={item.id}
                 title={`${item.id === selectedId ? 'Выбран · ' : ''}${item.completed ? 'Готово · ' : ''}${item.text}`}
                 ariaLabel={`${item.completed ? 'Снять отметку' : 'Отметить выполненным'}: ${item.text}`}
@@ -192,7 +192,7 @@ export function App() {
         </div>
 
         <div className="action-list">
-          <Button
+          <FullWidthButton
             title="Следующий невыполненный пункт"
             onActivate={() => {
               const next = findNextIncompleteItem(items, selectedId);
@@ -205,17 +205,17 @@ export function App() {
           {confirmReset ? (
             <>
               <p role="status">Удалить все пункты? Это действие нельзя отменить.</p>
-              <Button title="Да, очистить список" onActivate={resetItems} />
-              <Button title="Отмена очистки" onActivate={() => setConfirmReset(false)} />
+              <FullWidthButton title="Да, очистить список" onActivate={resetItems} />
+              <FullWidthButton title="Отмена очистки" onActivate={() => setConfirmReset(false)} />
             </>
           ) : (
-            <Button
+            <FullWidthButton
               title="Сбросить список"
               onActivate={() => setConfirmReset(true)}
               disabled={items.length === 0}
             />
           )}
-          <Button title="Назад на главный экран" onActivate={goBack} />
+          <FullWidthButton title="Назад на главный экран" onActivate={goBack} />
         </div>
         {persistenceNotice && (
           <p className="status-message" role="status">{persistenceNotice}</p>
@@ -236,7 +236,7 @@ export function App() {
         <p data-testid="control-activations">{controlActivations}</p>
         <div className="action-list">
           {['Вверх', 'Вниз', 'Влево', 'Вправо'].map((direction) => (
-            <Button
+            <FullWidthButton
               key={direction}
               title={direction}
               onStateChange={(_previous, next) => {
@@ -250,7 +250,7 @@ export function App() {
               }}
             />
           ))}
-          <Button title="Назад на главный экран" onActivate={goBack} />
+          <FullWidthButton title="Назад на главный экран" onActivate={goBack} />
         </div>
       </main>
     </Page>
@@ -267,7 +267,7 @@ export function App() {
         </dl>
         <p>Состояние сети — только подсказка браузера, не проверка доступа в интернет.</p>
         <p>Камера, микрофон и датчики в этой версии не запрашиваются и не используются.</p>
-        <Button title="Назад на главный экран" onActivate={goBack} />
+        <FullWidthButton title="Назад на главный экран" onActivate={goBack} />
       </main>
     </Page>
   );

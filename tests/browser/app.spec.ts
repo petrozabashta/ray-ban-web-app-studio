@@ -122,7 +122,7 @@ test('Meta Wearables manifest and icon are served with valid fields', async ({ r
 test('local DEMO/MOCK screen fits display and desktop viewport widths', async ({ page }) => {
   await page.goto('/');
   await page
-    .getByRole('button', { name: 'Локальная проверка видео DEMO/MOCK' })
+    .getByRole('button', { name: 'Тест видео DEMO/MOCK' })
     .click();
 
   for (const viewport of [
@@ -151,7 +151,7 @@ test('local DEMO/MOCK stream reaches the receiver and releases resources on stop
 
   await page.goto('/');
   await page
-    .getByRole('button', { name: 'Локальная проверка видео DEMO/MOCK' })
+    .getByRole('button', { name: 'Тест видео DEMO/MOCK' })
     .click();
   await expect(page.getByTestId('mock-stream-screen')).toBeVisible();
   await expect(page.getByRole('note')).toContainText('Это не Meta DAT');
@@ -205,7 +205,7 @@ test('local DEMO/MOCK stream reports unsupported browser APIs without requesting
 
   await page.goto('/');
   await page
-    .getByRole('button', { name: 'Локальная проверка видео DEMO/MOCK' })
+    .getByRole('button', { name: 'Тест видео DEMO/MOCK' })
     .click();
   await page.getByRole('button', { name: 'Запустить локальный тест DEMO/MOCK' }).click();
 
