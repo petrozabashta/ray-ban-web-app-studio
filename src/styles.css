@@ -1,0 +1,157 @@
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  background-color: var(--uit-color-background-window);
+}
+
+body {
+  overflow: hidden;
+}
+
+.studio-page {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+.screen-content {
+  box-sizing: border-box;
+  display: flex;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  gap: clamp(0.5rem, 2vmin, 0.75rem);
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: clamp(0.75rem, 4vmin, 1.5rem);
+  padding-block-end: clamp(1rem, 6vmin, 2rem);
+}
+
+.screen-content :focus-visible {
+  outline: 3px solid currentColor;
+  outline-offset: 2px;
+}
+
+.screen-content h1,
+.screen-content p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.hero {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding-inline-start: 0.75rem;
+  border-inline-start: 4px solid #5b8cff;
+}
+
+.hero h1 {
+  font-size: clamp(1.25rem, 6vmin, 1.75rem);
+  line-height: 1.15;
+}
+
+.hero-badge {
+  align-self: flex-start;
+  padding: 0.1rem 0.6rem;
+  border: 1px solid #5b8cff;
+  border-radius: 999px;
+  color: #9db9ff;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.action-list,
+.checklist-items {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.action-list > *,
+.checklist-items > * {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.item-form {
+  display: flex;
+  min-width: 0;
+  align-items: stretch;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.list-count {
+  font-variant-numeric: tabular-nums;
+}
+
+.status-message,
+.control-result {
+  overflow-wrap: anywhere;
+}
+
+.mock-stream-screen h2 {
+  margin: 0 0 0.35rem;
+  font-size: 1rem;
+}
+
+.mock-warning {
+  font-weight: 600;
+}
+
+.mock-video-grid {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: repeat(auto-fit, minmax(min(12rem, 100%), 1fr));
+  gap: 0.5rem;
+}
+
+.mock-video-grid section {
+  min-width: 0;
+}
+
+.mock-video {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  background: #07131c;
+  object-fit: contain;
+}
+
+.info-list {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+}
+
+.info-list div {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(10rem, 100%), 1fr));
+  gap: 0.25rem 0.5rem;
+}
+
+.info-list dt {
+  font-weight: 600;
+}
+
+.info-list dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+@media (min-width: 700px) {
+  .screen-content {
+    max-width: 48rem;
+    margin-inline: auto;
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "name": "Web App Studio",
+  "description": "Рабочий список и проверка управления для Meta Ray-Ban Display.",
+  "appearance": {
+    "theme_color": "#3867D6",
+    "icon": {
+      "src": "../icon.svg"
+    }
+  }
+}

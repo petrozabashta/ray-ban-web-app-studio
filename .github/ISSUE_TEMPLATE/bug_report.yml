@@ -1,0 +1,42 @@
+name: Bug report
+description: Report a reproducible issue in the app or simulator workflow
+title: "[Bug]: "
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: What happened?
+      description: Describe the observed behavior and what you expected.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction steps
+      placeholder: "1. Open ...\n2. Select ...\n3. Observe ..."
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and version
+  - type: input
+    id: simulator
+    attributes:
+      label: Simulator extension version
+      description: If applicable; otherwise enter "not used".
+  - type: textarea
+    id: viewport
+    attributes:
+      label: Viewport and display background
+      description: For example, 600×600 in the simulator, and the selected background.
+  - type: textarea
+    id: media
+    attributes:
+      label: Screenshot and WebM
+      description: Attach a screenshot and the simulator Viewport Recorder WebM if available.
+  - type: textarea
+    id: logs
+    attributes:
+      label: Console errors
+      render: text
