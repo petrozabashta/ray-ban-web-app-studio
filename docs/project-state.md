@@ -1,76 +1,65 @@
 # Состояние проекта
 
-Проверено: 2026-11-12. Это статус реализации, а не заявление о совместимости или готовности к публикации.
+Проверено 2026-11-13. Это статус реализации и сверки с официальной документацией, а не результат теста на очках.
 
 ## Цель
 
-Передавать почти непрерывное видео с камеры одной пары Meta Ray-Ban Display на дисплей другой пары с минимально достижимой задержкой. Показ заранее записанного ролика или редких снимков не считается выполнением цели.
+Проверить возможность почти непрерывно передавать изображение с камеры одной пары Meta Ray-Ban Display на дисплей другой пары с минимально достижимой задержкой. Записанный ролик или локальный браузерный loopback не считаются выполнением цели.
 
-## Что действительно работает
+## Что реально работает
 
-- Текущий код — браузерный React/Vite MVP: навигация Meta UI Toolkit, локальный чек-лист, экран проверки управления и отдельный пример Snake.
-- Локальный экран DEMO/MOCK создаёт синтетический Canvas-поток и передаёт его через пару `RTCPeerConnection` внутри текущей вкладки в `<video>`; он измеряет частоту показа браузерного приёмника, останавливает дорожки и не запрашивает камеру, разрешения, сеть или сохранение.
-- Проверено в Chromium/Playwright, не на очках. В коде нет DAT-интеграции, доступа к камере, реальной передачи между устройствами, backend или синхронизации.
-- Адаптивный интерфейс под 600×600 (размеры от viewport, видимый фокус), манифест и иконка Meta (`public/.well-known/`). Проверено Playwright: `npm run check` — 12 браузерных тестов, 5 unit-тестов. Не проверено на очках.
-- Опубликовано 2026-11-12 на GitHub Pages: https://petrozabashta.github.io/ray-ban-web-app-studio/ (HTTPS, манифест и иконка отдаются с правильными типами; проверено запросами). На очках не открывалось.
-- Дистрибуция (по поиску 2026-11-12, не по официальному документу Meta): публичного магазина веб-приложений Meta Ray-Ban Display нет; приложение добавляется по HTTPS-URL в режиме разработчика. Подтвердить по документации Meta до публичных обещаний.
-- Git не содержит коммитов; текущие файлы неотслеживаемые. Не считать историю изменений восстановленной.
-- На этой Windows-машине доступны Node.js 22.21.0 и npm 11.6.2; `xcodebuild` и Swift отсутствуют. Установленный UI Toolkit — `@wearables-ui-toolkit/mrbd` и `icons` 129.23.0; в npm опубликована версия 130.33.0. iOS DAT SDK в проект не установлен.
+- React/TypeScript/Vite Web App с Toolkit `App`, `Page`, `Button` и штатной навигацией, работающий в Chromium на очках по опубликованному HTTPS URL. На 2026-11-13 опубликованная версия: https://petrozabashta.github.io/ray-ban-web-app-studio/
+- Главный экран, локальный чек-лист (localStorage), проверка клавиатуры/фокуса, экран сведений и отдельный пример Snake.
+- DEMO/MOCK тест создаёт синтетический Canvas-сигнал, передаёт его через WebRTC loopback в той же вкладке и измеряет отображаемый FPS. Камера и разрешения не запрашиваются; видеоданные не отправляются или сохраняются.
+- Экран сведений показывает границы текущей реализации. Обезличенный диагностический JSON копируется только по запросу; он не включает URL, user-agent, текст исключения, токены или кадры. Ошибка копирования отображается пользователю. Потеря WebRTC-соединения DEMO/MOCK отделяется от отсутствия DAT.
+- `docs/device-test-plan.md` содержит порядок проверки Web App на одной паре и отдельно помечает заблокированные DAT/двухпарные тесты.
+- `npm run check` прошёл 2026-11-13: typecheck, lint, 6 unit-тестов, сборка и 14 Playwright-тестов. Все пять экранов визуально просмотрены в Chromium при 600×600 и 390×844; проверено отсутствие горизонтального overflow. Это не тест на физическом устройстве.
+- Сайт опубликован ранее, но изменения этой сессии локальные и ещё не опубликованы. Статус hardware test — **не проверен**.
 
-## Критический путь по официальным источникам Meta
+## Официально подтверждено документацией Meta
 
-Все пункты ниже проверены по опубликованным документам 2026-11-12; аппаратные прогоны не выполнялись.
+Проверено 2026-11-13. Версии страницы документации: Web Apps — актуальная публичная документация без SDK version; DAT — guide/reference 1.0, версия dependency table содержит 1.0.1.
 
-| Участок | Подтверждено документацией | Не подтверждено |
+| Тема | Подтверждённое | Граница вывода |
 |---|---|---|
-| Камера → мобильное приложение | DAT iOS 1.0.1 — официальный Swift Package. `DeviceSession.addCamera` и `videoFramePublisher` дают приложению кадры. Документированы 360×640, 504×896 и 720×1280; частоты запроса 2, 7, 15, 24 или 30 FPS. Bluetooth Classic может вызвать снижение качества; это не гарантия фактической частоты. Meta Ray-Ban Display входит в список устройств SDK. | Реальные кадры и частота на этих двух парах; работа при блокировке экрана/в фоне. |
-| Изображение → дисплей | DAT Display `Image(uri:)` отображает изображение с URL; дисплей 600×600. Документация предупреждает о задержке при избыточном размере. | Частота замены изображений, минимальный интервал, буферизация, сохранение соединения и пригодность для видеокадров. |
-| Видео → дисплей | `VideoPlayer` принимает MP4 по HTTPS, максимум 400 пикселей на сторону и 70 000 пикселей суммарно; одно видео на display session. | Live/сегментированный MP4, HLS, WebRTC и другие потоковые протоколы, буферизация и end-to-end задержка не документированы. Не считать обычную поддержку MP4 подтверждением live. |
-| Один iPhone → две пары | `DeviceSession` связан с конкретным устройством; `AutoDeviceSelector` выбирает первое подключённое устройство. Разрешения учитывают несколько привязанных очков. | Одновременная работа двух `DeviceSession` на одном iPhone и маршрутизация кадров между ними. Документация о multi-device permissions этого не доказывает. |
-| Два iPhone → две пары | DAT поддерживает iOS-клиент и указанные модели очков; камера и дисплей управляются из мобильных приложений. | Канал передачи между телефонами, его протокол, безопасность, relay и работа как единой live-сессии не определены Meta в проверенных материалах. |
-| Сессия и разрешения | Пользователь регистрирует интеграцию через Meta AI и выдаёт camera permission там же. Сессии могут перейти в `PAUSED`/`STOPPED`; закрытие дужек разрывает Bluetooth, остановленный session нельзя переиспользовать. | Поведение конкретного приложения на реальной прошивке и правила продолжения камеры в фоне. |
-| Web App | Документация Web Apps описывает browser UI для дисплея; камера доступна через DAT, не через этот React MVP. В списке возможностей Web Apps live-видео не описано. | Не делать вывод, что браузерный `<video>` невозможен; его пригодность для этого сценария просто не подтверждена документацией или экспериментом. |
+| Web App | Web App работает в Chromium-браузере на Meta Ray-Ban Display. URL подключается через Meta AI при Developer Mode; в документации путь `App Settings → Apps → Web Apps → Connect Web App`. Контент Web App рисуется на очковом дисплее, телефон используется для настройки/подключения. | Доступность пункта меню зависит от аккаунта/версии/региона; конкретная модель и ПО пользователя не проверены на устройстве. |
+| Web APIs | Только DAT предоставляет интеграции доступ к камере очков и захвату микрофона; web-приложения получают сказанный текст, введённый в поле, а не raw audio/camera stream. | Наличие Chromium API вроде `getUserMedia` не является доступом к камере очков и в проекте не используется. |
+| DAT платформы и устройства | DAT имеет клиентские SDK для iOS и Android и список поддерживаемого оборудования включает Meta Ray-Ban Display. Для DAT 1.0.1 таблица указывает Meta AI V292 и firmware V128 для Display. Требования SDK: iOS 17.2+ / Xcode 26.4+; Android 10+ / Android Studio Flamingo+ / Kotlin 2.2+. | Пользователь сообщил iPhone 18 Pro Max, iOS 27.2, Meta AI V297.1.0.17.153 и Display firmware 00GQ V129. Эти значения выше версий в DAT 1.0.1 dependency table, но не были независимо прочитаны с устройств. Совпадение версий не гарантирует server-gated возможности. |
+| Камера через DAT | Мобильный клиент получает кадры `VideoFrame` от сессии очков. Документированные размеры: 360×640, 504×896 и 720×1280; запрашиваемые частоты 2, 7, 15, 24 и 30 FPS. Bluetooth Classic может вызвать автоматическое снижение качества. | FPS/задержка на реальных очках не измерялись. |
+| Вывод видео через DAT Display | `VideoPlayer` воспроизводит на очках видео с HTTPS URL. Формат MP4; максимум 400 пикселей на сторону и 70 000 пикселей суммарно; одно видео на display session. Это вывод полноэкранного проигрывателя. | Документация не подтверждает WebRTC/HLS/MJPEG, push-кадры, сегментированный MP4 или непрерывное обновление ролика как live-режим. Обычный MP4 playback не равен live-видео. |
+| Распространение DAT | Meta описывает приватный invite-only Beta release channel в Wearables Developer Center; для Developer Mode одновременно зарегистрировано только одно стороннее приложение. | Не найден публичный production-магазин DAT-интеграций/доступный production channel для этого продукта. |
+| Apple App Store | Актуальное руководство Meta прямо предупреждает: App Store submission «not currently supported»; использующийся `ExternalAccessory` может привести к отказу из-за MFi и privacy manifest требований. | iOS DAT-приложение нельзя представлять как готовое к публикации в App Store. |
 
-### Версии и официальные источники
+### Официальные источники
 
-- DAT iOS **1.0.1**, официальный тег, дата changelog 2026-10-09; источник распространяется по Meta Wearables Developer Terms, а не как обычная permissive open-source лицензия: [iOS SDK tag](https://github.com/meta/meta-wearables-dat-ios/tree/1.0.1), [changelog](https://github.com/meta/meta-wearables-dat-ios/blob/main/CHANGELOG.md), [terms](https://wearables.developer.meta.com/terms).
-- README официального iOS SDK говорит, что DAT analytics и сбор SDK crashes включены по умолчанию и настраиваются отдельно в `Info.plist`; до проверки реального перечня данных нельзя заполнять privacy labels. Для заявленной минимизации диагностики запланировать `MWDAT.Analytics.OptOut=true` и `MWDAT.CrashReporting.OptOut=true`, затем проверить, что нужная интеграция продолжает работать: [iOS SDK README](https://github.com/meta/meta-wearables-dat-ios/blob/1.0.1/README.md).
-- [Meta Acceptable Use Policy](https://wearables.developer.meta.com/acceptable-use-policy) запрещает скрытую съёмку и обход индикаторов записи. Продукт не должен обходить аппаратные индикаторы; сценарий тестировать с явным запуском камеры и видимым состоянием.
-- Для DAT 1.0.1 таблица Meta указывает Meta AI app V292 и firmware очков V128, iOS 17.2+ и Xcode 26.4+: [version dependencies](https://wearables.developer.meta.com/docs/develop/dat/version-dependencies/), [getting started](https://wearables.developer.meta.com/docs/develop/dat/getting-started-toolkit/).
-- Камера и ограничения потока: [DAT streaming](https://wearables.developer.meta.com/docs/develop/dat/streaming/), [camera stream processing](https://wearables.developer.meta.com/docs/develop/dat/camera-stream-processing/).
-- Изображение и MP4 на дисплее: [DAT Display for iOS](https://wearables.developer.meta.com/docs/develop/dat/display-ios/), [DeviceSession reference](https://wearables.developer.meta.com/docs/reference/ios_swift/dat/1.0/mwdatcore_devicesession), [AutoDeviceSelector reference](https://wearables.developer.meta.com/docs/reference/ios_swift/dat/1.0/mwdatcore_autodeviceselector).
-- Регистрация и permissions: [permissions and registration](https://wearables.developer.meta.com/docs/develop/dat/permissions-requests/); выпуск интеграций и тестовые каналы: [release channels](https://wearables.developer.meta.com/docs/develop/dat/set-up-release-channels/), [project setup](https://wearables.developer.meta.com/docs/develop/dat/manage-projects/).
-- Поддержка Web Apps и список документированных web-возможностей: [Web Apps overview](https://wearables.developer.meta.com/docs/develop/webapps/build/overview/).
-- Apple требует достоверно декларировать сбор данных приложения и сторонних SDK: [App privacy details](https://developer.apple.com/app-store/app-privacy-details/); также применяются [App Review Guidelines](https://developer.apple.com/app-store/review/guidelines/).
+- [Choose between DAT and Web Apps](https://wearables.developer.meta.com/docs/develop/webapps/build/overview/) и [Load a Web App on glasses](https://wearables.developer.meta.com/docs/develop/webapps/setup/).
+- [DAT overview / supported hardware](https://wearables.developer.meta.com/docs/develop/dat/getting-started-toolkit/), [version dependencies](https://wearables.developer.meta.com/docs/develop/dat/version-dependencies/).
+- [Camera streaming](https://wearables.developer.meta.com/docs/develop/dat/streaming/), [iOS Display API](https://wearables.developer.meta.com/docs/develop/dat/display-ios/), [Android Display API](https://wearables.developer.meta.com/docs/develop/dat/display-android/).
+- [iOS integration guide](https://wearables.developer.meta.com/docs/develop/dat/build-integration-ios/) (App Store warning), [Android integration guide](https://wearables.developer.meta.com/docs/develop/dat/build-integration-android/).
+- [Permissions and registration](https://wearables.developer.meta.com/docs/develop/dat/permissions-requests/), [release channels](https://wearables.developer.meta.com/docs/develop/dat/set-up-release-channels/).
 
-## Решение и ближайшая задача
+## Реализуемость главного сценария
 
-**Локальный тест без отсутствующих физических устройств:** используйте экран «Тест видео DEMO/MOCK». Он проверяет только синтетический видеоисточник → браузерный WebRTC loopback → декодирование и показ в HTML video, включая stop/cleanup и отсутствие сетевых запросов. Это автоматизируемый software-test текущего проекта, не Meta DAT Mock Device Kit и не тест камеры/дисплея очков. FPS относится только к локальному браузерному получателю; end-to-end задержка не измеряется.
+Web App сам по себе не может получить live-кадры камеры очков. Для источника нужен нативный DAT-клиент на телефоне. Такой клиент документирован и для iOS, и для Android — iOS не является обязательной платформой в общем случае. Для данного пользователя iPhone делает iOS практичным путём проверки, но требует Mac/Xcode.
 
-Meta отдельно публикует официальный **Mock Device Kit (DAT 1.0)**, который может симулировать SDK, camera feed из видео H.265, permissions и display без физических очков; до трёх mock glasses могут быть paired одновременно. Для браузерного preview официального дисплея Meta требует iOS app в iOS Simulator или Android app/emulator с DAT Mock Device Kit, плюс Chrome Simulator extension. iOS preview не работает от физического iPhone. Это самый близкий hardware-free тест Meta API, но текущая Windows-машина не имеет Xcode/Swift, Android Studio/SDK или `adb`, а этот проект не содержит mobile DAT app. Инструкции: [Mock Device Kit](https://wearables.developer.meta.com/docs/develop/dat/mock-device-kit/), [Display simulation](https://wearables.developer.meta.com/docs/develop/dat/display-simulation/), [iOS testing](https://wearables.developer.meta.com/docs/develop/dat/testing-mdk-ios/), [Android testing](https://wearables.developer.meta.com/docs/develop/dat/testing-mdk-android/).
+Поддерживаемый DAT Display способен показать MP4 по HTTPS на принимающей паре. Документированного live-видеовхода на дисплей нет. Передача с источника потребовала бы отдельно получать camera frames, безопасно передавать их между телефонами и подать пригодный для поддержанного `VideoPlayer` ресурс принимающему DAT-клиенту. Последнее live-звено не подтверждено; не делаем вывод ни о невозможности, ни о готовности сценария.
 
-Не добавлять live transport или backend до проверки выхода на принимающий дисплей. Минимальный диагностический эксперимент на macOS/Xcode и двух парах:
+Одни очки и один iPhone позволяют проверять подключение Web App и, после появления нативного DAT-тестового клиента, отдельные операции «камера → приложение» и «MP4 → дисплей». Они не позволяют подтвердить передачу между двумя очками. Архитектуру и транспорт между телефонами не строить до отдельного доказательства пригодного выхода на принимающий дисплей.
 
-1. На DAT 1.0.1 подтвердить запуск camera stream и получение реальных `VideoFrame` на передающих очках.
-2. Отдельно подтвердить на принимающих очках загрузку `Image(uri:)` с HTTPS URL.
-3. Проверить, обновляется ли URL-изображение достаточно часто для целевого сценария; измерить реальную частоту и отдельно задержки доступными временными метками. Это только эксперимент: успешный показ картинки ещё не доказывает непрерывное видео.
-4. Проверить один iPhone с двумя парами; если одновременные сессии не подтверждаются, проверить два телефона. Не считать кадр из исходного телефона доказательством его появления на дисплее получателя.
+## Среда, проверки и релиз
 
-**Ближайшая реализация после эксперимента:** отдельный небольшой iOS DAT-клиент на подтверждённой версии SDK. До проверки принимающего API в этом репозитории не создаются фиктивные DAT-вызовы, транспорт, backend или «покадровая» замена требуемого видео.
+- Репозиторий: `main`, на старте задачи последний коммит `d33ace8` и рабочее дерево было чистым. Изменения текущей задачи незакоммичены; commit/push/publication не выполнялись.
+- Windows: Node.js/npm установлены; `xcodebuild`, Swift, Java, adb и Gradle отсутствуют. iOS-сборка не выполнялась. Android SDK-клиент тоже не собирался.
+- Команды: `npm run typecheck`, `npm run lint`, `npm test`, `npm run test:browser`, `npm run check`.
+- GitHub Pages — только доставка browser Web App, не публикация DAT-клиента и не доказательство интеграции с очками.
+- Результаты текущей работы и статусы физических тестов записаны в [device-test-plan.md](./device-test-plan.md).
 
-## Коммерческая подготовка (черновик)
+## Статус и следующий шаг
 
-- **Описание для тестеров:** «Экспериментальная передача изображения с одной пары Meta Ray-Ban Display на другую. Почти непрерывный режим, задержка и список совместимых устройств пока не подтверждены. Не предназначено для критически важных задач.» Не использовать как публичное обещание продукта.
-- **Privacy draft:** «Передача камеры запускается только по явному действию пользователя и после разрешения Meta AI. [Указать фактический маршрут кадров, серверы/поставщиков и срок хранения после выбора архитектуры.] [Подтвердить, что видео не записывается и не сохраняется.] [Перечислить фактически собираемую телеметрию, включая сторонние SDK.]» Это незаполненный черновик, не юридическая политика и не основание для отправки в App Store. Apple требует точных privacy details по данным приложения и сторонних партнёров. DAT iOS 1.0.1 включает аналитику и crash capture по умолчанию; запланированные opt-out выше ещё не настроены и не проверены.
-- **Тестирование:** сначала проверить UI в Chrome/Simulator; затем на macOS с Xcode 26.4+ собрать DAT 1.0.1, включить Developer Mode, зарегистрировать app integration, выдать camera permission и протестировать две пары с актуальными Meta AI/firmware. Записать версию SDK/прошивки, выбранный FPS, полученные кадры, разрывы и метод измерения задержки; не сохранять изображения в логи. Browser tests не заменяют эти шаги.
-- Meta описывает Wearables Developer Center, проекты и invite-only release channel для тестирования. Доступность production distribution для этой интеграции и коммерческая модель не подтверждены; требуется developer account и проверка актуальных developer terms/acceptable-use policy. Если нужен iPhone-клиент, отдельно потребуются Apple App Store privacy details и review; правила оплаты цифровых функций надо проверить после выбора модели продаж по актуальным [App Review Guidelines](https://developer.apple.com/app-store/review/guidelines/). Ни аккаунты, ни публикация, ни согласование условий не выполнялись.
+**Основной двухпарный сценарий: C — live video до принимающего дисплея не подтверждено официальным API или экспериментом.** Это конкретный блокер, но не доказательство невозможности.
 
-## Блокеры и статус
+Следующий проверяемый этап: пользователь открывает опубликованный Web App на одной паре и возвращает результаты по шагам в [device-test-plan.md](./device-test-plan.md). Сообщённые версии выше DAT 1.0.1 baseline, но требуют подтверждения фактическими экранами устройства. Для DAT нужны Mac с Xcode 26.4+ и Developer Mode; сначала следует получить кадр с одной пары, затем отдельно вывести поддержанный MP4. Только после этого имеет смысл экспериментировать с live-путём. Для двухпарного end-to-end всё равно нужны вторая пара и отдельный телефон либо документированная поддержка двух сессий на одном телефоне.
 
-- Нет macOS/Xcode для сборки iOS-клиента и нет физического доступа к двум парам для end-to-end теста.
-- Официальный Meta Mock Device Kit способен закрыть часть проверок без двух реальных пар, но ещё не интегрирован в этот web-only проект и не может быть собран в текущей Windows-среде.
-- Нет подтверждения Meta для частого обновления `Image(uri:)`, live-режима `VideoPlayer` или двух одновременных device sessions на одном iPhone.
-- Не выбран и не одобрен защищённый транспорт между телефонами; нельзя определить его хранение/приватность без этого выбора.
-- Не проверены developer account/release channel, коммерческие условия SDK и App Store metadata на готовом продукте.
+### Продолжение в новой сессии
 
-**Статус основного сценария: C** — критический участок вывода почти непрерывного изображения на принимающие очки не подтверждён документацией или устройствами. Это не утверждение, что сценарий невозможен. Следующее необходимое действие — эксперимент с двумя физическими парами, DAT 1.0.1 и macOS/Xcode.
+Откройте репозиторий `ray-ban-web-app-studio`, прочитайте этот файл и [device-test-plan.md](./device-test-plan.md), проверьте `git status`, затем продолжайте с численной сверки версий и Web App теста на одной паре. Не коммитьте, не отправляйте push и не запускайте публикацию без отдельного подтверждения в этой сессии.

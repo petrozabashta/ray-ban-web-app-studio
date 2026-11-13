@@ -8,6 +8,7 @@ import {
 import packageJson from '../package.json';
 import { FullWidthButton } from './FullWidthButton';
 import { MockStreamScreen } from './MockStreamScreen';
+import { createDiagnosticReport } from './diagnostics';
 import {
   createChecklistItem,
   findNextIncompleteItem,
@@ -49,6 +50,7 @@ export function App() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [hasStorage, setHasStorage] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
+  const [diagnosticNotice, setDiagnosticNotice] = useState<string | null>(null);
 
   useEffect(() => {
     const updateOnlineState = () => setIsOnline(navigator.onLine);
@@ -124,6 +126,31 @@ export function App() {
     setConfirmReset(false);
   };
 
+  const copyDiagnostics = async () => {
+    if (!navigator.clipboard?.writeText) {
+      setDiagnosticNotice('Копирование недоступно в этом браузере.');
+      return;
+    }
+
+    const report = createDiagnosticReport(packageJson.version, {
+      secureContext: window.isSecureContext,
+      online: navigator.onLine,
+      localStorageAvailable: hasStorage,
+      webRtcAvailable: typeof RTCPeerConnection !== 'undefined',
+      canvasCaptureAvailable:
+        typeof HTMLCanvasElement.prototype.captureStream === 'function',
+      videoFrameCallbackAvailable:
+        typeof HTMLVideoElement.prototype.requestVideoFrameCallback === 'function',
+    });
+
+    try {
+      await navigator.clipboard.writeText(report);
+      setDiagnosticNotice('Обезличенный отчёт скопирован.');
+    } catch {
+      setDiagnosticNotice('Не удалось скопировать отчёт. Проверьте разрешение буфера обмена.');
+    }
+  };
+
   const renderHome = () => (
     <Page headerText="Ray-Ban Studio" className="studio-page">
       <main className="screen-content" data-testid="home-screen">
@@ -193,7 +220,7 @@ export function App() {
 
         <div className="action-list">
           <FullWidthButton
-            title="Следующий невыполненный пункт"
+            title="К следующему пункту"
             onActivate={() => {
               const next = findNextIncompleteItem(items, selectedId);
               setSelectedId(next?.id ?? null);
@@ -259,14 +286,24 @@ export function App() {
   const renderInfo = () => (
     <Page headerText="О приложении" className="studio-page">
       <main className="screen-content" data-testid="info-screen">
+        <p className="mock-warning" role="note">
+          Диагностика этого браузерного MVP. Интеграции Meta DAT нет; значения ниже не подтверждают
+          подключение очков.
+        </p>
         <dl className="info-list">
           <div><dt>Версия</dt><dd>{packageJson.version}</dd></div>
           <div><dt>Сеть браузера</dt><dd>{isOnline ? 'Подключение есть' : 'Офлайн'}</dd></div>
           <div><dt>Локальное хранилище</dt><dd>{hasStorage ? 'Доступно' : 'Недоступно'}</dd></div>
           <div><dt>Безопасный контекст</dt><dd>{window.isSecureContext ? 'Да' : 'Нет'}</dd></div>
+          <div><dt>Meta DAT</dt><dd>Не встроен</dd></div>
+          <div><dt>Разрешение камеры очков</dt><dd>Не запрашивалось</dd></div>
+          <div><dt>Подключение очков</dt><dd>Не проверяется без DAT</dd></div>
+          <div><dt>Вывод на дисплей очков</dt><dd>Не реализован</dd></div>
         </dl>
         <p>Состояние сети — только подсказка браузера, не проверка доступа в интернет.</p>
         <p>Камера, микрофон и датчики в этой версии не запрашиваются и не используются.</p>
+        <FullWidthButton title="Скопировать диагностику" onActivate={() => void copyDiagnostics()} />
+        {diagnosticNotice && <p role="status">{diagnosticNotice}</p>}
         <FullWidthButton title="Назад на главный экран" onActivate={goBack} />
       </main>
     </Page>

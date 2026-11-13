@@ -1,47 +1,41 @@
-# Подготовка публикации
+# Размещение и подключение
 
-Публикация не запускалась. Локальный каталог уже инициализирован как Git-репозиторий с веткой `main`; commit, remote, GitHub repository и push не создавались. Для GitHub Pages проект использует статическую Vite-сборку, без backend и без серверных rewrite. Внутренние экраны приложения не зависят от URL-маршрутов. Vite `base` задаётся переменной `VITE_BASE_PATH`.
+## Текущая публикация Web App
 
-## Создание GitHub repository
+Браузерный Web App уже опубликован на GitHub Pages:
 
-1. Создайте пустой repository на <https://github.com/new>; не добавляйте README, license или `.gitignore`, так как они уже есть локально.
-2. Учитывайте, что опубликованный Pages URL доступен публично; выберите visibility осознанно.
-3. До первого push проверьте `git status` и содержимое изменений. После вашего явного подтверждения добавьте remote и отправьте ветку:
+- URL: <https://petrozabashta.github.io/ray-ban-web-app-studio/>
+- Репозиторий: <https://github.com/petrozabashta/ray-ban-web-app-studio>
+
+Публикация этого сайта доставляет только browser Web App. Она не устанавливает DAT, не подключает камеру и не публикует нативный клиент.
+
+В репозитории есть ручной GitHub Pages workflow `.github/workflows/pages.yml`. Он запускается только вручную и требует checkbox `confirm_publication`. Изменения в этой сессии не коммитить, не отправлять и не публиковать без отдельного подтверждения пользователя.
+
+## Meta Wearables manifest
+
+Meta Ray-Ban Display читает имя и иконку из `/.well-known/meta-wearables-manifest.json` относительно URL запуска. В проекте это [public/.well-known/meta-wearables-manifest.json](../public/.well-known/meta-wearables-manifest.json) и [public/icon.svg](../public/icon.svg). Путь `../icon.svg` относителен манифесту и работает при project base path. URL манифеста должен отдаваться по HTTPS как JSON. На физическом устройстве рендер иконки ещё не проверялся.
+
+## Открытие в очках
+
+По текущей документации Meta:
+
+1. Убедитесь, что очки подключены к Meta AI, и включите Developer Mode, если соответствующий пункт доступен.
+2. Откройте **App Settings → Apps → Web Apps → Connect Web App**.
+3. Введите HTTPS URL выше и сохраните.
+4. Запустите приложение из app grid очков.
+
+Расположение пунктов интерфейса и доступность функции могут зависеть от версии Meta AI, аккаунта и региона. Проверенный порядок и результаты на конкретном устройстве см. в [плане тестирования](./device-test-plan.md).
+
+## Сборка
 
 ```powershell
-git add .
-git commit -m "Initial Ray-Ban Web App Studio"
-git remote add origin https://github.com/<owner>/<repository>.git
-git push -u origin main
+npm ci
+npm run check
+npm run build
 ```
 
-Удалённый repository и push в этой задаче не выполнялись. Не включайте в staged changes `.env`, токены, личные данные или файлы вне проекта.
+Проект — статическая Vite-сборка в `dist/`; `VITE_BASE_PATH` задаёт base path. Другой статический HTTPS-хостинг возможен при корректной раздаче файлов и well-known manifest. Публикация в этой документации не считается проверкой интеграции с очками.
 
-## GitHub Pages
+## Отдельно о нативном DAT и App Store
 
-В репозитории подготовлен `.github/workflows/pages.yml`. Он запускается только вручную из **Actions → Publish to GitHub Pages → Run workflow** и по умолчанию не публикует сайт. Для публикации нужно отметить `confirm_publication`; workflow выполнит проверки, соберёт проект с `/<имя-репозитория>/` и отправит артефакт в Pages.
-
-Перед использованием:
-
-1. Создайте GitHub repository самостоятельно или попросите отдельно подготовить его. Создание репозитория и первый push требуют подтверждения; здесь они не выполнялись.
-2. После вашего подтверждения выполните первый push и убедитесь, что проверки CI прошли.
-3. В GitHub откройте **Settings → Pages** и выберите источник **GitHub Actions**.
-4. Проверьте доступы workflow и имя репозитория. При проектном Pages URL base path равен `/<имя-репозитория>/`; для custom domain обычно нужен `/`.
-5. Только после явного решения запустите ручной workflow и подтвердите публикацию его checkbox.
-6. После deploy откройте опубликованный HTTPS URL и проверьте загрузку ресурсов, вкладки ошибок и сценарий приложения.
-
-Стандартный workflow проверок не публикует сайт. Workflow Pages с `workflow_dispatch` — только заготовка для публикации после ручного подтверждения; сейчас не запускался.
-
-## Манифест и иконка
-
-Очки читают имя и иконку из `/.well-known/meta-wearables-manifest.json` рядом с URL запуска (источник: документация Meta Web Apps, App Icons). В проекте это [public/.well-known/meta-wearables-manifest.json](../public/.well-known/meta-wearables-manifest.json) и монохромная [public/icon.svg](../public/icon.svg) (путь `../icon.svg` относителен манифесту, поэтому base path не мешает). Хостинг должен отдавать манифест по HTTPS как `application/json; charset=utf-8`. Иконка — черновая; цвет и вид можно проверить в App Icon Generator от Meta. Как очки показывают её, на устройстве не проверялось.
-
-## Другие статические хостинги
-
-Сборка (`npm run build`) — обычная статика в `dist/`. Для корня домена используйте `VITE_BASE_PATH=/`, для подпути — `/<путь>/`. Сервис «appplayapp» не идентифицирован: его требования не проверены, загрузка не выполнялась.
-
-## Добавление в Meta AI / очки
-
-В Meta AI добавляйте URL только после того, как сайт действительно доступен публично по HTTPS. Следуйте актуальным пунктам интерфейса Meta AI для своей версии и аккаунта; не предполагаем точный путь меню, поддержку региона или функции аккаунта. QR/View on Glasses используйте только если установленный симулятор явно показывает такую возможность. Не создавайте deep link URI вручную.
-
-Для локальной проверки публикации используйте симулятор в Chrome и затем отдельно проверьте приложение на настоящих очках. Browser CI не заменяет эти проверки.
+Публикация Web App по URL не равна App Store публикации. Актуальное руководство Meta по iOS DAT прямо предупреждает, что App Store submission для DAT сейчас не поддерживается и приложение может быть отклонено из-за `ExternalAccessory`, MFi и privacy manifest требований. Для тестирования DAT Meta описывает Developer Mode и приватный invite-only Beta release channel. Проверяйте актуальные требования Meta до выбора канала распространения.

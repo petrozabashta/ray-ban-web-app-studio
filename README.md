@@ -54,6 +54,7 @@ npx playwright install chromium
 
 Полный набор проверок и границы измерений описаны в [docs/testing.md](./docs/testing.md).
 Состояние основной цели и различие между локальным DEMO/MOCK и официальной эмуляцией Meta описаны в [docs/project-state.md](./docs/project-state.md).
+Пошаговая проверка одной пары очков, DAT и недоступных двухпарных сценариев — в [docs/device-test-plan.md](./docs/device-test-plan.md).
 
 ## Как добавить экран или кнопку
 

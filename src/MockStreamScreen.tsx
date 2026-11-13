@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Page } from '@wearables-ui-toolkit/mrbd';
 import { FullWidthButton } from './FullWidthButton';
+import packageJson from '../package.json';
+import { createDiagnosticReport, type DiagnosticFailure } from './diagnostics';
 
 type TestState = 'idle' | 'connecting' | 'streaming' | 'error';
 
@@ -46,6 +48,8 @@ export function MockStreamScreen({ onBack }: { onBack: () => void }) {
   const [state, setState] = useState<TestState>('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const [receivedFps, setReceivedFps] = useState(0);
+  const [failureCategory, setFailureCategory] = useState<DiagnosticFailure>('none');
+  const [copyNotice, setCopyNotice] = useState('');
 
   const release = useCallback(() => {
     generation.current += 1;
@@ -79,6 +83,8 @@ export function MockStreamScreen({ onBack }: { onBack: () => void }) {
     release();
     setReceivedFps(0);
     setErrorMessage('');
+    setFailureCategory('none');
+    setCopyNotice('');
     setState('idle');
   }, [release]);
 
@@ -89,6 +95,7 @@ export function MockStreamScreen({ onBack }: { onBack: () => void }) {
     const video = receiverVideo.current;
     if (!canvas || !video) {
       setState('error');
+      setFailureCategory('local_test_failed');
       setErrorMessage('Не удалось подготовить элементы локального теста.');
       return;
     }
@@ -98,6 +105,7 @@ export function MockStreamScreen({ onBack }: { onBack: () => void }) {
       typeof video.requestVideoFrameCallback !== 'function'
     ) {
       setState('error');
+      setFailureCategory('unsupported_browser_api');
       setErrorMessage('Браузер не поддерживает необходимые функции локального теста.');
       return;
     }
@@ -150,6 +158,27 @@ export function MockStreamScreen({ onBack }: { onBack: () => void }) {
       }
       active = { source, sender, receiver };
       connection.current = active;
+      let isStreaming = false;
+      const onConnectionStateChange = () => {
+        if (
+          !isStreaming ||
+          generation.current !== run ||
+          ![sender, receiver].some((peer) =>
+            ['disconnected', 'failed'].includes(peer.connectionState),
+          )
+        ) {
+          return;
+        }
+
+        release();
+        setFailureCategory('local_connection_lost');
+        setErrorMessage(
+          'Локальное WebRTC-соединение потеряно. Остановите и запустите тест снова.',
+        );
+        setState('error');
+      };
+      sender.addEventListener('connectionstatechange', onConnectionStateChange);
+      receiver.addEventListener('connectionstatechange', onConnectionStateChange);
       sender.addTrack(source.getVideoTracks()[0], source);
 
       const trackReady = new Promise<boolean>((resolve) => {
@@ -214,6 +243,11 @@ export function MockStreamScreen({ onBack }: { onBack: () => void }) {
         videoFrameCallback.current = video.requestVideoFrameCallback(reportPresentedFrame);
       };
       videoFrameCallback.current = video.requestVideoFrameCallback(reportPresentedFrame);
+      isStreaming = true;
+      onConnectionStateChange();
+      if (generation.current !== run) {
+        return;
+      }
       setState('streaming');
     } catch (error) {
       if (generation.current !== run) {
@@ -221,9 +255,46 @@ export function MockStreamScreen({ onBack }: { onBack: () => void }) {
       }
       release();
       setState('error');
+      setFailureCategory('local_test_failed');
       setErrorMessage(
         error instanceof Error ? error.message : 'Локальный тест завершился с ошибкой.',
       );
+    }
+  };
+
+  const copyDiagnostics = async () => {
+    if (!navigator.clipboard?.writeText) {
+      setCopyNotice('Копирование недоступно в этом браузере.');
+      return;
+    }
+
+    let localStorageAvailable = false;
+    try {
+      localStorageAvailable = window.localStorage.length >= 0;
+    } catch {
+      localStorageAvailable = false;
+    }
+
+    const report = createDiagnosticReport(
+      packageJson.version,
+      {
+        secureContext: window.isSecureContext,
+        online: navigator.onLine,
+        localStorageAvailable,
+        webRtcAvailable: typeof RTCPeerConnection !== 'undefined',
+        canvasCaptureAvailable:
+          typeof HTMLCanvasElement.prototype.captureStream === 'function',
+        videoFrameCallbackAvailable:
+          typeof HTMLVideoElement.prototype.requestVideoFrameCallback === 'function',
+      },
+      failureCategory,
+    );
+
+    try {
+      await navigator.clipboard.writeText(report);
+      setCopyNotice('Обезличенный отчёт скопирован.');
+    } catch {
+      setCopyNotice('Не удалось скопировать отчёт. Проверьте разрешение буфера обмена.');
     }
   };
 
@@ -264,10 +335,20 @@ export function MockStreamScreen({ onBack }: { onBack: () => void }) {
         <p role="status" data-testid="mock-stream-status">
           {state === 'idle' && 'Тест остановлен.'}
           {state === 'connecting' && 'Настраивается локальный видеоканал…'}
-          {state === 'streaming' && 'DEMO: видеопоток отображается в локальном приёмнике.'}
+          {state === 'streaming' &&
+            'DEMO/MOCK: тестовое видео показано в браузере этой вкладки.'}
           {state === 'error' && 'Локальный тест недоступен.'}
         </p>
-        {state === 'error' && <p role="alert">{errorMessage}</p>}
+        {state === 'error' && (
+          <>
+            <p role="alert">{errorMessage}</p>
+            <FullWidthButton
+              title="Скопировать диагностику ошибки"
+              onActivate={() => void copyDiagnostics()}
+            />
+            {copyNotice && <p role="status">{copyNotice}</p>}
+          </>
+        )}
         <p data-testid="mock-stream-metrics">
           Получатель показывает: {state === 'streaming' ? receivedFps : 0} кадров/с. Задержка
           end-to-end не измеряется.

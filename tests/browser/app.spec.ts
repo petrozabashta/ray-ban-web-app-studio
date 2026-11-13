@@ -94,7 +94,9 @@ test('screens fit device and desktop viewports without horizontal overflow', asy
   await page.getByLabel('Текст нового пункта').press('Enter');
 
   for (const viewport of [
+    { width: 390, height: 844 },
     { width: 600, height: 600 },
+    { width: 400, height: 400 },
     { width: 1000, height: 800 },
   ]) {
     await page.setViewportSize(viewport);
@@ -105,6 +107,61 @@ test('screens fit device and desktop viewports without horizontal overflow', asy
 
     expect(dimensions.scrollWidth).toBeLessThanOrEqual(dimensions.clientWidth);
   }
+});
+
+test('all application screens stay usable at iPhone and glasses viewport sizes', async ({
+  page,
+}) => {
+  await page.goto('/');
+
+  const screens = [
+    { button: 'Открыть рабочий чек-лист', testId: 'checklist-screen' },
+    { button: 'Проверить управление', testId: 'controls-screen' },
+    { button: 'Тест видео DEMO/MOCK', testId: 'mock-stream-screen' },
+    { button: 'О приложении', testId: 'info-screen' },
+  ];
+
+  for (const viewport of [
+    { width: 390, height: 844 },
+    { width: 600, height: 600 },
+  ]) {
+    await page.setViewportSize(viewport);
+    for (const screen of screens) {
+      await page.getByRole('button', { name: screen.button }).click();
+      await expect(page.getByTestId(screen.testId)).toBeVisible();
+      const dimensions = await page.evaluate(() => ({
+        clientWidth: document.documentElement.clientWidth,
+        scrollWidth: document.documentElement.scrollWidth,
+      }));
+      expect(dimensions.scrollWidth).toBeLessThanOrEqual(dimensions.clientWidth);
+
+      await page.locator('.screen-content').evaluate((element) => {
+        element.scrollTop = element.scrollHeight;
+      });
+      await expect(
+        page.getByRole('button', { name: 'Назад на главный экран' }),
+      ).toBeVisible();
+      await page.getByRole('button', { name: 'Назад на главный экран' }).click();
+    }
+  }
+});
+
+test('diagnostic copy contains anonymous capability states only', async ({ page }) => {
+  await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
+  await page.goto('/');
+  await page.getByRole('button', { name: 'О приложении' }).click();
+  await expect(page.getByText('Не встроен')).toBeVisible();
+  await expect(page.getByText('Не запрашивалось')).toBeVisible();
+  await expect(page.getByText('Не проверяется без DAT')).toBeVisible();
+  await expect(page.getByText('Не реализован')).toBeVisible();
+  await page.getByRole('button', { name: 'Скопировать диагностику' }).click();
+  await expect(page.getByRole('status')).toHaveText('Обезличенный отчёт скопирован.');
+
+  const report = await page.evaluate(() => navigator.clipboard.readText());
+  expect(report).toContain('"metaDat": "not-integrated"');
+  expect(report).toContain('"glassesCameraPermission": "not-requested"');
+  expect(report).not.toContain('userAgent');
+  expect(report).not.toContain('https://');
 });
 
 test('Meta Wearables manifest and icon are served with valid fields', async ({ request }) => {
@@ -159,7 +216,7 @@ test('local DEMO/MOCK stream reaches the receiver and releases resources on stop
   const requestsBeforeStream = [...externalRequests];
   await page.getByRole('button', { name: 'Запустить локальный тест DEMO/MOCK' }).click();
   await expect(page.getByTestId('mock-stream-status')).toContainText(
-    'видеопоток отображается',
+    'тестовое видео показано',
     { timeout: 10_000 },
   );
 
@@ -188,6 +245,7 @@ test('local DEMO/MOCK stream reaches the receiver and releases resources on stop
 test('local DEMO/MOCK stream reports unsupported browser APIs without requesting camera access', async ({
   page,
 }) => {
+  await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
   await page.addInitScript(() => {
     Object.defineProperty(window, 'RTCPeerConnection', {
       configurable: true,
@@ -215,6 +273,13 @@ test('local DEMO/MOCK stream reports unsupported browser APIs without requesting
   await expect(page.getByRole('alert')).toContainText(
     'Браузер не поддерживает необходимые функции',
   );
+  await page
+    .getByRole('button', { name: 'Скопировать диагностику ошибки' })
+    .click();
+  await expect(page.getByText('Обезличенный отчёт скопирован.')).toBeVisible();
+  const report = await page.evaluate(() => navigator.clipboard.readText());
+  expect(report).toContain('"failure": "unsupported_browser_api"');
+  expect(report).not.toContain('Camera permission must not be requested');
 });
 
 test('the app and separate upstream Snake load without browser errors', async ({
